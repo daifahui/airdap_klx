@@ -1,0 +1,20 @@
+AirDAP CH572 platform support
+
+The Apache License, Version 2.0 supplied with openwch/ch570 is retained,
+without modification, in LICENSE.
+
+Upstream: https://github.com/openwch/ch570
+Source revision: 1e34c9450cd6df390153952c097cd09dd8a91aed
+Original copyright: Nanjing Qinheng Microelectronics Co., Ltd.; see the
+individual source files for the applicable copyright years.
+
+The adapted EVT files include clock.c, ch572_clock.h, ch572rf.h, ch572sfr.h,
+core_riscv.h and startup.S. Their original copyright and file-level notices
+are retained. WCH's source headers also contain a notice about use of the
+software and binaries with WCH-manufactured microcontrollers. The directory
+LICENSE does not replace or remove those file-level notices.
+
+AirDAP changes include the platform interface, protected clock-transition
+integration, interrupt setup, attribute macros and runtime support.
+This NOTICE records provenance and modifications; it does not replace the
+original license or grant rights beyond the applicable source notices.

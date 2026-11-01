@@ -1,0 +1,9 @@
+AirDAP firmware
+
+Original AirDAP project code is available under the MIT License in LICENSE.
+Third-party portions retain their original licenses and copyright notices:
+
+- src/dap: Arm CMSIS-DAP and Apache-2.0 portions; see LICENSE and NOTICE there.
+- src/ch572: adapted WCH EVT definitions; see LICENSE, NOTICE and file headers.
+
+The project MIT license does not replace those third-party terms.

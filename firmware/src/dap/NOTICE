@@ -1,0 +1,17 @@
+AirDAP DAP module
+
+Unless a file states otherwise, the source files in this directory and the
+AirDAP modifications are provided under the Apache License, Version 2.0.
+See LICENSE for the complete terms. Dependencies outside this directory have
+their own licenses and notices.
+
+This module includes modified Arm CMSIS-DAP source code.
+Copyright (c) 2013-2022 ARM Limited. All rights reserved.
+
+Upstream: https://github.com/ARM-software/CMSIS-DAP
+Source revision: 12636590eec66fae2d1bba4518749426ad5a4595
+The original copyright and Apache-2.0 notices are retained in dap.c and dap.h.
+
+AirDAP adaptations include the platform configuration, SWD/JTAG backends,
+runtime clock coordination and shared USB/RF command-buffer integration.
+This NOTICE records attribution and changes; it does not modify LICENSE.

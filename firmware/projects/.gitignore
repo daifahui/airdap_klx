@@ -1,0 +1,6 @@
+# MRS build outputs and workspace state
+**/obj/
+**/.mrs/
+**/.settings/
+**/.cache/
+**/.template

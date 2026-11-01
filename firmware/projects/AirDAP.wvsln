@@ -1,0 +1,8 @@
+../DFU
+../Local
+../Host
+../Target
+../Router
+../FullRole
+../Dongle
+BuildOrder=DFU,Local,Host,Target,Router,FullRole,Dongle

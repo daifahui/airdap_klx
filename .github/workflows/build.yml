@@ -1,0 +1,65 @@
+# SPDX-License-Identifier: MIT
+name: Build firmware
+
+on:
+  push:
+    paths:
+      - firmware/**
+      - .github/**
+  pull_request:
+    paths:
+      - firmware/**
+      - .github/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      image: ghcr.io/metro94/wch-mrs@sha256:bf56dd6c14bc322e5ba6f36b0ed8435d8b2d0d39b55ff87167f765ab926051c8
+    strategy:
+      fail-fast: false
+      matrix:
+        timestamp: [0, 1]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Select Timestamp test configuration
+        if: matrix.timestamp == 1
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          p = Path('firmware/src/dap/dap_config.h')
+          data, count = re.subn(r'(#define\s+DAP_TIMESTAMP_ENABLE\s+)0\b', r'\g<1>1', p.read_text())
+          assert count == 1
+          p.write_text(data)
+          PY
+      - name: Build native MRS solution
+        run: |
+          mrs-build firmware/projects/AirDAP.wvsln \
+            --expect FullRole/obj/FullRole.hex \
+            --expect FullRole/obj/FullRole.bin \
+            --expect FullRole/obj/FullRole.dfu \
+            --expect Dongle/obj/Dongle.hex \
+            --expect Dongle/obj/Dongle.bin \
+            --expect Dongle/obj/Dongle.dfu \
+            --require-fresh --log .github/.logs/native-build.log
+      - name: Verify linked products
+        run: python3 .github/scripts/verify_build.py
+      - name: Upload firmware
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: AirDAP-timestamp${{ matrix.timestamp }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            firmware/projects/FullRole/obj/FullRole.hex
+            firmware/projects/FullRole/obj/FullRole.bin
+            firmware/projects/FullRole/obj/FullRole.dfu
+            firmware/projects/Dongle/obj/Dongle.hex
+            firmware/projects/Dongle/obj/Dongle.bin
+            firmware/projects/Dongle/obj/Dongle.dfu

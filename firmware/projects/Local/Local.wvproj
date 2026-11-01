@@ -1,0 +1,680 @@
+{
+    "version": "1.0",
+    "hasAllParsed": true,
+    "isNormalMRSProject": true,
+    "basic": {
+        "chipInfo": {
+            "vendor": "WCH",
+            "toolchain": "RISC-V",
+            "series": "CH57x",
+            "rtos": "NoneOS",
+            "mcu": "CH572D",
+            "description": "Local",
+            "tempratureScope": "",
+            "link": "",
+            "peripheral_version": "",
+            "calibrateSupport": false,
+            "UIConfigSupport": false,
+            "externalFlashSupport": false
+        },
+        "linkedFolders": [
+            {
+                "name": "99_startup",
+                "location": "../../src/ch572"
+            },
+            {
+                "name": "98_clock",
+                "location": "../../src/ch572"
+            },
+            {
+                "name": "97_main",
+                "location": "../../src/."
+            },
+            {
+                "name": "96_board",
+                "location": "../../src/bsp"
+            },
+            {
+                "name": "95_clock_control",
+                "location": "../../src/bsp"
+            },
+            {
+                "name": "94_runtime",
+                "location": "../../src/."
+            },
+            {
+                "name": "93_usb_device",
+                "location": "../../src/usb"
+            },
+            {
+                "name": "92_usb_descriptors",
+                "location": "../../src/usb"
+            },
+            {
+                "name": "91_usb_power",
+                "location": "../../src/usb"
+            },
+            {
+                "name": "90_dap",
+                "location": "../../src/dap"
+            },
+            {
+                "name": "89_dap_queue",
+                "location": "../../src/dap"
+            },
+            {
+                "name": "88_swj",
+                "location": "../../src/dap"
+            },
+            {
+                "name": "87_swd_recovery",
+                "location": "../../src/dap"
+            },
+            {
+                "name": "86_gpio_shift",
+                "location": "../../src/dap"
+            },
+            {
+                "name": "85_gpio_swd",
+                "location": "../../src/dap"
+            },
+            {
+                "name": "84_spi_swd",
+                "location": "../../src/dap"
+            },
+            {
+                "name": "83_spi_swd_transfer_fast",
+                "location": "../../src/dap"
+            },
+            {
+                "name": "82_gpio_jtag",
+                "location": "../../src/dap"
+            },
+            {
+                "name": "81_uart_line",
+                "location": "../../src/uart"
+            },
+            {
+                "name": "80_uart_io",
+                "location": "../../src/uart"
+            },
+            {
+                "name": "79_app_mode",
+                "location": "../../src/mode"
+            },
+            {
+                "name": "78_mode_memory",
+                "location": "../../src/mode"
+            },
+            {
+                "name": "77_mode_image",
+                "location": "../../src/mode"
+            },
+            {
+                "name": "76_mode_image_entry",
+                "location": "../../src/mode"
+            },
+            {
+                "name": "75_identity",
+                "location": "../../src/bsp"
+            },
+            {
+                "name": "74_flash_io",
+                "location": "../../src/ch572"
+            },
+            {
+                "name": "73_dfu_runtime",
+                "location": "../../src/dfu"
+            },
+            {
+                "name": "72_usb_dfu_entry",
+                "location": "../../src/dfu"
+            }
+        ],
+        "removedResources": [
+            {
+                "parentLogicPath": "",
+                "type": "file",
+                "name": "*.7z"
+            },
+            {
+                "parentLogicPath": "",
+                "type": "file",
+                "name": "*.zip"
+            },
+            {
+                "parentLogicPath": "",
+                "type": "file",
+                "name": "*.tar"
+            }
+        ],
+        "projectName": "Local",
+        "architecture": "RISC-V",
+        "projectType": "c"
+    },
+    "buildConfig": {
+        "configurations": [
+            {
+                "parallelizationNumber": "optimal",
+                "buildArtifact": {
+                    "artifact_name": "${ProjName}",
+                    "artifact_extension": "elf",
+                    "output_prefix": "",
+                    "artifact_type": "Executable"
+                },
+                "stop_on_first_build_error": true,
+                "usingCacheAccelerate": false,
+                "pre_script": "",
+                "pre_script_description": "",
+                "post_script": "",
+                "post_script_description": "",
+                "excludeResources": [
+                    "${project}/99_startup/flash_io.c",
+                    "${project}/99_startup/clock.c",
+                    "${project}/98_clock/flash_io.c",
+                    "${project}/98_clock/startup.S",
+                    "${project}/97_main/runtime.c",
+                    "${project}/97_main/dfu",
+                    "${project}/97_main/mode",
+                    "${project}/97_main/bsp",
+                    "${project}/97_main/ch572",
+                    "${project}/97_main/rf",
+                    "${project}/97_main/usb",
+                    "${project}/97_main/dap",
+                    "${project}/97_main/uart",
+                    "${project}/97_main/role_router.S",
+                    "${project}/96_board/identity.c",
+                    "${project}/96_board/clock_control.c",
+                    "${project}/95_clock_control/identity.c",
+                    "${project}/95_clock_control/board.c",
+                    "${project}/94_runtime/dfu",
+                    "${project}/94_runtime/mode",
+                    "${project}/94_runtime/bsp",
+                    "${project}/94_runtime/ch572",
+                    "${project}/94_runtime/rf",
+                    "${project}/94_runtime/usb",
+                    "${project}/94_runtime/main.c",
+                    "${project}/94_runtime/dap",
+                    "${project}/94_runtime/uart",
+                    "${project}/94_runtime/role_router.S",
+                    "${project}/93_usb_device/usb_descriptors.c",
+                    "${project}/93_usb_device/usb_power.c",
+                    "${project}/92_usb_descriptors/usb_device.c",
+                    "${project}/92_usb_descriptors/usb_power.c",
+                    "${project}/91_usb_power/usb_descriptors.c",
+                    "${project}/91_usb_power/usb_device.c",
+                    "${project}/90_dap/dap_queue.c",
+                    "${project}/90_dap/spi_swd_transfer_fast.c",
+                    "${project}/90_dap/gpio_jtag.c",
+                    "${project}/90_dap/swj.c",
+                    "${project}/90_dap/swd_recovery.c",
+                    "${project}/90_dap/gpio_shift.S",
+                    "${project}/90_dap/gpio_swd.c",
+                    "${project}/90_dap/spi_swd.c",
+                    "${project}/89_dap_queue/spi_swd_transfer_fast.c",
+                    "${project}/89_dap_queue/gpio_jtag.c",
+                    "${project}/89_dap_queue/dap.c",
+                    "${project}/89_dap_queue/swj.c",
+                    "${project}/89_dap_queue/swd_recovery.c",
+                    "${project}/89_dap_queue/gpio_shift.S",
+                    "${project}/89_dap_queue/gpio_swd.c",
+                    "${project}/89_dap_queue/spi_swd.c",
+                    "${project}/88_swj/dap_queue.c",
+                    "${project}/88_swj/spi_swd_transfer_fast.c",
+                    "${project}/88_swj/gpio_jtag.c",
+                    "${project}/88_swj/dap.c",
+                    "${project}/88_swj/swd_recovery.c",
+                    "${project}/88_swj/gpio_shift.S",
+                    "${project}/88_swj/gpio_swd.c",
+                    "${project}/88_swj/spi_swd.c",
+                    "${project}/87_swd_recovery/dap_queue.c",
+                    "${project}/87_swd_recovery/spi_swd_transfer_fast.c",
+                    "${project}/87_swd_recovery/gpio_jtag.c",
+                    "${project}/87_swd_recovery/dap.c",
+                    "${project}/87_swd_recovery/swj.c",
+                    "${project}/87_swd_recovery/gpio_shift.S",
+                    "${project}/87_swd_recovery/gpio_swd.c",
+                    "${project}/87_swd_recovery/spi_swd.c",
+                    "${project}/86_gpio_shift/dap_queue.c",
+                    "${project}/86_gpio_shift/spi_swd_transfer_fast.c",
+                    "${project}/86_gpio_shift/gpio_jtag.c",
+                    "${project}/86_gpio_shift/dap.c",
+                    "${project}/86_gpio_shift/swj.c",
+                    "${project}/86_gpio_shift/swd_recovery.c",
+                    "${project}/86_gpio_shift/gpio_swd.c",
+                    "${project}/86_gpio_shift/spi_swd.c",
+                    "${project}/85_gpio_swd/dap_queue.c",
+                    "${project}/85_gpio_swd/spi_swd_transfer_fast.c",
+                    "${project}/85_gpio_swd/gpio_jtag.c",
+                    "${project}/85_gpio_swd/dap.c",
+                    "${project}/85_gpio_swd/swj.c",
+                    "${project}/85_gpio_swd/swd_recovery.c",
+                    "${project}/85_gpio_swd/gpio_shift.S",
+                    "${project}/85_gpio_swd/spi_swd.c",
+                    "${project}/84_spi_swd/dap_queue.c",
+                    "${project}/84_spi_swd/spi_swd_transfer_fast.c",
+                    "${project}/84_spi_swd/gpio_jtag.c",
+                    "${project}/84_spi_swd/dap.c",
+                    "${project}/84_spi_swd/swj.c",
+                    "${project}/84_spi_swd/swd_recovery.c",
+                    "${project}/84_spi_swd/gpio_shift.S",
+                    "${project}/84_spi_swd/gpio_swd.c",
+                    "${project}/83_spi_swd_transfer_fast/dap_queue.c",
+                    "${project}/83_spi_swd_transfer_fast/gpio_jtag.c",
+                    "${project}/83_spi_swd_transfer_fast/dap.c",
+                    "${project}/83_spi_swd_transfer_fast/swj.c",
+                    "${project}/83_spi_swd_transfer_fast/swd_recovery.c",
+                    "${project}/83_spi_swd_transfer_fast/gpio_shift.S",
+                    "${project}/83_spi_swd_transfer_fast/gpio_swd.c",
+                    "${project}/83_spi_swd_transfer_fast/spi_swd.c",
+                    "${project}/82_gpio_jtag/dap_queue.c",
+                    "${project}/82_gpio_jtag/spi_swd_transfer_fast.c",
+                    "${project}/82_gpio_jtag/dap.c",
+                    "${project}/82_gpio_jtag/swj.c",
+                    "${project}/82_gpio_jtag/swd_recovery.c",
+                    "${project}/82_gpio_jtag/gpio_shift.S",
+                    "${project}/82_gpio_jtag/gpio_swd.c",
+                    "${project}/82_gpio_jtag/spi_swd.c",
+                    "${project}/81_uart_line/uart_io.c",
+                    "${project}/80_uart_io/uart_line.c",
+                    "${project}/79_app_mode/mode_image.c",
+                    "${project}/79_app_mode/mode_image_entry.S",
+                    "${project}/79_app_mode/mode_memory.c",
+                    "${project}/78_mode_memory/mode_image.c",
+                    "${project}/78_mode_memory/app_mode.c",
+                    "${project}/78_mode_memory/mode_image_entry.S",
+                    "${project}/77_mode_image/app_mode.c",
+                    "${project}/77_mode_image/mode_image_entry.S",
+                    "${project}/77_mode_image/mode_memory.c",
+                    "${project}/76_mode_image_entry/mode_image.c",
+                    "${project}/76_mode_image_entry/app_mode.c",
+                    "${project}/76_mode_image_entry/mode_memory.c",
+                    "${project}/75_identity/clock_control.c",
+                    "${project}/75_identity/board.c",
+                    "${project}/74_flash_io/startup.S",
+                    "${project}/74_flash_io/clock.c",
+                    "${project}/73_dfu_runtime/usb_control.c",
+                    "${project}/73_dfu_runtime/dfu.c",
+                    "${project}/73_dfu_runtime/flash_ch572.c",
+                    "${project}/73_dfu_runtime/platform.c",
+                    "${project}/73_dfu_runtime/entry.S",
+                    "${project}/73_dfu_runtime/usb_dfu_entry.S",
+                    "${project}/72_usb_dfu_entry/usb_control.c",
+                    "${project}/72_usb_dfu_entry/dfu_runtime.c",
+                    "${project}/72_usb_dfu_entry/dfu.c",
+                    "${project}/72_usb_dfu_entry/flash_ch572.c",
+                    "${project}/72_usb_dfu_entry/platform.c",
+                    "${project}/72_usb_dfu_entry/entry.S"
+                ],
+                "optimization": {
+                    "level": "size",
+                    "message_length": false,
+                    "char_is_signed": false,
+                    "function_sections": true,
+                    "data_sections": true,
+                    "no_common_unitialized": true,
+                    "do_not_inline_functions": false,
+                    "assume_freestanding_environment": false,
+                    "disable_builtin": true,
+                    "single_precision_constants": false,
+                    "position_independent_code": false,
+                    "link_time_optimizer": false,
+                    "disable_loop_invariant_move": false,
+                    "optimize_unused_sections_declared_as_high_code": false,
+                    "code_generation_without_hardware_floating": false,
+                    "use_pipelines": false,
+                    "show_caret_indicating_the_column": false,
+                    "calling_convention_variant": false,
+                    "other_optimization_flags": "-mshorten-memrefs -mrelax -fstack-usage"
+                },
+                "warnings": {
+                    "check_syntax_only": false,
+                    "pedantic": false,
+                    "pedantic_warnings_as_errors": false,
+                    "inhibit_all_warnings": false,
+                    "warn_on_various_unused_elements": false,
+                    "warn_on_uninitialized_variables": false,
+                    "enable_all_common_warnings": true,
+                    "enable_extra_warnings": true,
+                    "warn_on_undeclared_global_function": false,
+                    "warn_on_implicit_conversions": false,
+                    "warn_if_pointer_arthmetic": false,
+                    "warn_if_padding_is_included": false,
+                    "warn_if_shadowed_variable": false,
+                    "warn_if_suspicious_logical_ops": false,
+                    "warn_if_struct_is_returned": false,
+                    "warn_if_floats_are_compared_as_equal": false,
+                    "generate_errors_instead_of_warnings": true,
+                    "other_warning_flags": ""
+                },
+                "debugging": {
+                    "debug_level": "max",
+                    "debug_format": "default",
+                    "generate_prof_information": false,
+                    "generate_gprof_information": false,
+                    "other_debugging_flags": ""
+                },
+                "assembler": {
+                    "preprocessor": {
+                        "use_preprocessor": true,
+                        "do_not_search_system_directories": false,
+                        "preprocess_only": false,
+                        "defined_symbols": [
+                            "APP_MODE=0"
+                        ],
+                        "undefined_symbols": []
+                    },
+                    "includes": {
+                        "include_paths": [
+                            "../../../src"
+                        ],
+                        "include_system_paths": [],
+                        "include_files": []
+                    },
+                    "other_warning_flags": "",
+                    "miscellaneous": {
+                        "assembler_flags": [],
+                        "generate_assembler_listing": false,
+                        "save_temporary_files": false,
+                        "verbose": false,
+                        "other_assembler_flags": ""
+                    }
+                },
+                "ccompiler": {
+                    "preprocessor": {
+                        "do_not_search_system_directories": false,
+                        "preprocess_only": false,
+                        "defined_symbols": [
+                            "APP_MODE=0"
+                        ],
+                        "undefined_symbols": []
+                    },
+                    "includes": {
+                        "include_paths": [
+                            "../../../src"
+                        ],
+                        "include_system_paths": [],
+                        "include_files": []
+                    },
+                    "optimization": {
+                        "language_standard": "gnu11",
+                        "other_optimization_flags": ""
+                    },
+                    "warnings": {
+                        "warn_if_a_global_function_has_no_prototype": false,
+                        "warn_if_a_function_has_no_arg_type": false,
+                        "warn_if_wrong_cast": false,
+                        "other_warning_flags": ""
+                    },
+                    "miscellaneous": {
+                        "generate_assembler_listing": false,
+                        "save_temporary_files": false,
+                        "verbose": false,
+                        "other_compiler_flags": ""
+                    }
+                },
+                "cppcompiler": {
+                    "preprocessor": {
+                        "do_not_search_system_directories": false,
+                        "do_not_search_system_cpp_directories": false,
+                        "preprocess_only": false,
+                        "defined_symbols": [],
+                        "undefined_symbols": []
+                    },
+                    "includes": {
+                        "include_paths": [
+                            "${project}/../../src"
+                        ],
+                        "include_system_paths": [],
+                        "include_files": []
+                    },
+                    "optimization": {
+                        "cpp_language_standard": "gnucpp11",
+                        "abi_version": "0",
+                        "do_not_use_exceptions": false,
+                        "do_not_use_rtti": false,
+                        "do_not_use__cxa_atexit": false,
+                        "do_not_use_thread_safe_statics": false,
+                        "other_optimization_flags": ""
+                    },
+                    "warnings": {
+                        "warn_on_abi_violations": false,
+                        "warn_on_class_privacy": false,
+                        "warn_on_no_except_expressions": false,
+                        "warn_on_virtual_destructors": false,
+                        "warn_on_uncast_null": false,
+                        "warn_on_sign_promotion": false,
+                        "warn_about_effictive_cpp_violcations": false,
+                        "other_warning_flags": ""
+                    },
+                    "miscellaneous": {
+                        "generate_assembler_listing": false,
+                        "save_temporary_files": false,
+                        "verbose": false,
+                        "other_compiler_flags": ""
+                    }
+                },
+                "clinker": {
+                    "general": {
+                        "scriptFiles": [
+                            "../../ld/local.ld"
+                        ],
+                        "do_not_use_standard_start_files": false,
+                        "do_not_use_default_libraries": false,
+                        "no_startup_or_default_libs": true,
+                        "remove_unused_sections": true,
+                        "print_removed_sections": false,
+                        "omit_all_symbol_information": false
+                    },
+                    "libraries": {
+                        "libraries": [
+                            "gcc"
+                        ],
+                        "library_search_path": []
+                    },
+                    "miscellaneous": {
+                        "picolibc": "disabled",
+                        "linker_flags": [],
+                        "other_objects": [],
+                        "generate_map": "\"${BuildArtifactFileBaseName}.map\"",
+                        "cross_reference": false,
+                        "print_link_map": false,
+                        "use_newlib_nano": false,
+                        "use_float_with_nano_printf": false,
+                        "use_float_with_nano_scanf": false,
+                        "do_not_use_syscalls": false,
+                        "verbose": false,
+                        "use_wch_printffloat": false,
+                        "use_wch_printf": false,
+                        "use_iqmath": false,
+                        "other_linker_flags": "-Wl,--relax"
+                    }
+                },
+                "cpplinker": {
+                    "general": {
+                        "scriptFiles": [],
+                        "do_not_use_standard_start_files": true,
+                        "do_not_use_default_libraries": false,
+                        "no_startup_or_default_libs": false,
+                        "remove_unused_sections": true,
+                        "print_removed_sections": false,
+                        "omit_all_symbol_information": false
+                    },
+                    "libraries": {
+                        "libraries": [],
+                        "library_search_path": []
+                    },
+                    "miscellaneous": {
+                        "picolibc": "disabled",
+                        "linker_flags": [],
+                        "other_objects": [],
+                        "generate_map": "\"${BuildArtifactFileBaseName}.map\"",
+                        "cross_reference": false,
+                        "print_link_map": false,
+                        "use_newlib_nano": false,
+                        "use_float_with_nano_printf": false,
+                        "use_float_with_nano_scanf": false,
+                        "do_not_use_syscalls": true,
+                        "verbose": false,
+                        "use_wch_printffloat": false,
+                        "use_wch_printf": false,
+                        "use_iqmath": false,
+                        "other_linker_flags": ""
+                    }
+                },
+                "archiver": {
+                    "archiver_flags": "-r",
+                    "libOutputPrefix": "lib"
+                },
+                "createFlash": {
+                    "enabled": true,
+                    "outputFileFormat": "binary",
+                    "copy_only_section_text": false,
+                    "copy_only_section_data": false,
+                    "copy_only_sections": [],
+                    "create_algorithm_file": false,
+                    "other_flags": ""
+                },
+                "createList": {
+                    "enabled": false,
+                    "display_source": true,
+                    "display_all_headers": true,
+                    "demangle_names": true,
+                    "display_debug_info": false,
+                    "disassemble": false,
+                    "display_file_headers": false,
+                    "display_line_numbers": true,
+                    "display_relocation_info": false,
+                    "display_symbols": false,
+                    "wide_lines": true,
+                    "other_flags": ""
+                },
+                "printSize": {
+                    "enabled": false,
+                    "size_format": "berkeley",
+                    "hex": false,
+                    "show_totals": false,
+                    "other_flags": ""
+                },
+                "configVariables": [],
+                "riscvTargetProcessor": {
+                    "architecture": "rv32i",
+                    "multiply_extension": true,
+                    "atomic_extension": false,
+                    "floating_point": "none",
+                    "compressed_extension": true,
+                    "extra_compressed_extension": true,
+                    "bit_extension": false,
+                    "multiplication_subset_of_the_M_extension": false,
+                    "vector_cryptography_extensions": "",
+                    "integer_ABI": "ilp32",
+                    "floating_point_ABI": "none",
+                    "tuning": "default",
+                    "code_model": "low",
+                    "small_data_limit": 0,
+                    "align": "default",
+                    "save_restore": false,
+                    "other_target_flags": ""
+                },
+                "component_toolchain": "${WCH:Toolchain:GCC12}",
+                "name": "obj"
+            }
+        ]
+    },
+    "flashConfig": {
+        "mcutype": "CH572D",
+        "address": "0x00000000",
+        "target_path": "${project}/obj/Local.hex",
+        "clkSpeed": "High",
+        "debug_interface_mode": "1-wire serial",
+        "erase": false,
+        "program": false,
+        "verify": false,
+        "reset": false,
+        "sdiPrintf": false,
+        "disablepowerout": false,
+        "clearcodeflash": false,
+        "disablecodeprotect": false,
+        "flashType": "",
+        "asmFile_path": "",
+        "exepath": "",
+        "exearguments": ""
+    },
+    "debugConfigurations": {
+        "openOCDCfg": {
+            "useLocalOpenOCD": true,
+            "executable": "${WCH:OpenOCD:default}",
+            "gdbport": 3333,
+            "telnetport": 4444,
+            "tclport": 6666,
+            "configOptions": [
+                "-f \"${WCH:OpenOCD:default}/bin/wch-riscv.cfg\""
+            ],
+            "host": "127.0.0.1",
+            "port": 3333,
+            "skipDownloadBeforeDebug": false,
+            "enablePageEraser": false,
+            "enableNoZeroWaitingAreaFlash": false
+        },
+        "gdbCfg": {
+            "executable": "${WCH:Toolchain:GCC12}",
+            "options": [],
+            "commands": [
+                "set mem inaccessible-by-default off",
+                "set architecture riscv:rv32",
+                "set remotetimeout unlimited",
+                "set disassembler-options xw"
+            ]
+        },
+        "startup": {
+            "initCommands": {
+                "initReset": true,
+                "initResetType": "init",
+                "additionalCommands": [],
+                "armSemihosting": false,
+                "armSemihosting_old": false
+            },
+            "loadedFiles": {
+                "loadSymbols": true,
+                "useProjBinaryForSymbols": true,
+                "useFileForSymbols": false,
+                "symbolFile": "",
+                "symbolFileOffset": "",
+                "loadImage": true,
+                "useProjBinaryForImage": true,
+                "useFileForImage": false,
+                "executableFile": "",
+                "executableFileOffset": ""
+            },
+            "runCommands": {
+                "runReset": true,
+                "runResetType": "halt",
+                "additionalCommands": [],
+                "setBreakAt": "handle_reset",
+                "continue": true,
+                "setBreak": true,
+                "setProgramCounter": false,
+                "setProgramCounterAddress": ""
+            },
+            "debugInRAM": false
+        },
+        "output": {
+            "showDebugGDBTrace": true,
+            "saveDebugOutputToFile": false,
+            "showDebugOutputTimestamps": true
+        },
+        "reserve": {
+            "PROGRAM_NAME": "obj/Local.elf",
+            "PROJECT_ATTR": "Local",
+            "PROJECT_BUILD_CONFIG_AUTO_ATTR": true,
+            "PROJECT_BUILD_CONFIG_ID_ATTR": "",
+            "ATTR_BUILD_BEFORE_LAUNCH_ATTR": 2,
+            "GdbServerAllocateConsole": true,
+            "GdbServerAllocateTelnetConsole": false,
+            "SkipDownloadBeforeDebug": false,
+            "StartGdbCLient": true,
+            "UPDATE_THREADLIST_ON_SUSPEND": false,
+            "DebugInRam": false
+        }
+    }
+}
