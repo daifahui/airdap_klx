@@ -1,7 +1,6 @@
-/* The public application entry is generated as preloaded SRAM assembly.
- * a0 is the active, writable absolute-vector table (4B aligned). The gate
- * contains no old stack/gp/Flash references until clocks are restored.
- * The last Flash word still points to dfu_enter, the Flash copier, not RAM. */
+/* Application takeover and cold watchdog recovery share this Flash entry.
+ * The caller supplies a writable SRAM vector table in a0. No old stack or
+ * global state is used after the privilege bridge and peripheral shutdown. */
     .macro SAM_OPEN
     sb t3,0x40(t0)
     sb t4,0x40(t0)
@@ -73,107 +72,6 @@
     sw t2,4(t1)    /* clear PFIC pending after sources stopped */
     fence iorw,iorw
     .endm
-
-    .section .dfu_gate,"ax",@progbits
-    .option norelax
-    .balign 4
-    .global dfu_gate_start,dfu_gate_end
-    .type dfu_gate_start,@function
-dfu_gate_start:
-    li t0,0x88
-    csrrc zero,0x800,t0
-    li t0,0xe000e180
-    li t1,-1
-    sw t1,0(t0)
-    sw t1,4(t0)
-    andi t0,a0,3
-    bnez t0,.Lgate_bad
-    li t0,0x20000000
-    bltu a0,t0,.Lgate_bad
-    li t0,0x20002fdc
-    bltu t0,a0,.Lgate_bad
-    la t0,.Lgate_trap
-    sw t0,20(a0)
-    sw t0,32(a0)
-    fence.i
-    ecall           /* trap target ALSO in this preloaded SRAM gate */
-.Lgate_bad:
-    j .Lgate_bad
-    .balign 4
-.Lgate_trap:
-    li t0,0x20
-    csrs 0x804,t0   /* discard old automatic return context before overwrite */
-    la t0,.Lgate_machine
-    csrw mepc,t0
-    li t0,0x1800
-    csrw mstatus,t0
-    mret
-.Lgate_machine:
-    csrw 0x804,zero
-    QUIESCE_OLD
-    /* HSE may be off only while the caller is executing from SRAM/LSI.
-     * Preserve board-specific crystal load, use startup bias until ready. */
-    lbu a2,0x4e(t0)
-    lbu t1,0xa(t0)
-    andi t2,t1,4
-    bnez t2,.Lgate_hse_ready
-    ori t1,a2,3
-    SAM_OPEN
-    sb t1,0x4e(t0)
-    li t1,0x14
-    sb t1,0xa(t0)
-    sb zero,0x40(t0)
-    li t1,9
-.Lgate_hse_wait:
-    nop
-    addi t1,t1,-1
-    bnez t1,.Lgate_hse_wait
-    SAM_OPEN
-    sb a2,0x4e(t0)
-    sb zero,0x40(t0)
-.Lgate_hse_ready:
-    /* Change divider to32 in the OLD source first: LSI's stale DIV could
-     * be1 (clock stop if copied to HSE). Then choose known HSE/10 in SRAM. */
-    lbu t1,8(t0)
-    andi t1,t1,0xc0
-    SAM_OPEN
-    sb t1,8(t0)
-    sb zero,0x40(t0)
-    li t1,10
-    SAM_OPEN
-    sb t1,8(t0)
-    sb zero,0x40(t0)
-    /* CPU now HSE/10: restore PLL parameters with PLL off, restart it,
-     * and settle before any Flash tail fetch. No old PLL setting retained. */
-    li t1,4
-    SAM_OPEN
-    sb t1,0xa(t0)
-    li t1,0xa
-    sb t1,0x4b(t0)
-    sb zero,0x40(t0)
-    li t1,0x14
-    SAM_OPEN
-    sb t1,0xa(t0)
-    sb zero,0x40(t0)
-    li t1,40000
-.Lgate_pll_wait:
-    nop
-    addi t1,t1,-1
-    bnez t1,.Lgate_pll_wait
-    li t2,0x40001800
-    li t1,7
-    SAM_OPEN
-    sb t1,7(t2)    /* conservative Flash access while CPU on HSE/10 */
-    li t1,0x10
-    sb t1,5(t2)    /* SDK50M Flash clock strategy, no stale SCK bits */
-    sb zero,0x40(t0)
-    lui t0,%hi(__tail_pointer)
-    lw t0,%lo(__tail_pointer)(t0)
-    fence.i
-    jr t0
-    .balign 4
-dfu_gate_end:
-    .size dfu_gate_start,.-dfu_gate_start
 
     .section .dfu_entry,"ax",@progbits
     .option norelax

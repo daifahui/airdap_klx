@@ -220,7 +220,6 @@
                         "picolibc": "disabled",
                         "linker_flags": [],
                         "other_objects": [
-                            "../Router/obj/Router.bin",
                             "../Local/obj/Local.bin",
                             "../Host/obj/Host.bin",
                             "../Target/obj/Target.bin",

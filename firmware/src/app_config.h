@@ -1,6 +1,8 @@
 #ifndef APP_CONFIG_H
 #define APP_CONFIG_H
 
+#include "flash_layout.h"
+
 /* CH572Q USB Dongle: RF HOST only; full AirDAP remains the default. */
 
 #ifndef BSP_USB_DONGLE
@@ -16,9 +18,9 @@
 
 /* Values match the USB mode request parameters in usb/usb_requests.h:
  * USB_MODE_AUTO=0 (composite), USB_MODE_RF_HOST=2, USB_MODE_RF_TARGET=3. */
-#define APP_MODE_COMPOSITE  0
-#define APP_MODE_RF_HOST    2
-#define APP_MODE_RF_TARGET  3
+#define APP_MODE_COMPOSITE 0
+#define APP_MODE_RF_HOST   2
+#define APP_MODE_RF_TARGET 3
 
 #ifndef APP_MODE
 #if BSP_USB_DONGLE
@@ -28,24 +30,9 @@
 #endif
 #endif
 
-#ifndef BSP_DFU_APPLICATION_COPY
-#define BSP_DFU_APPLICATION_COPY 1
-#endif
-
-#if (BSP_DFU_APPLICATION_COPY != 0 && BSP_DFU_APPLICATION_COPY != 1)
-#error "BSP_DFU_APPLICATION_COPY must be 0 or 1"
-#endif
-
-/* LOCAL/HOST enable runtime DFU. The packer verifies these pointer slots
- * against the actual DFU layout; TARGET has no application USB stack. */
+/* LOCAL/HOST enable runtime DFU; TARGET has no application USB stack. */
 #define USB_DFU_ENABLE (!APP_COMBINED_TARGET)
 #define APP_DFU_BUILD  USB_DFU_ENABLE
-
-#if BSP_DFU_APPLICATION_COPY
-#define USB_DFU_POINTER_SLOT 0x35ffc
-#else
-#define USB_DFU_POINTER_SLOT 0x3fffc
-#endif
 
 /* Select a complete firmware image; unrelated drivers are excluded at link time. */
 #define APP_COMBINED_TARGET (APP_MODE == APP_MODE_RF_TARGET)

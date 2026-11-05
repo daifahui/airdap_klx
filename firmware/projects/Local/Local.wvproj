@@ -182,7 +182,6 @@
                     "${project}/97_main/usb",
                     "${project}/97_main/dap",
                     "${project}/97_main/uart",
-                    "${project}/97_main/role_router.S",
                     "${project}/96_board/identity.c",
                     "${project}/96_board/clock_control.c",
                     "${project}/95_clock_control/identity.c",
@@ -196,7 +195,6 @@
                     "${project}/94_runtime/main.c",
                     "${project}/94_runtime/dap",
                     "${project}/94_runtime/uart",
-                    "${project}/94_runtime/role_router.S",
                     "${project}/93_usb_device/usb_descriptors.c",
                     "${project}/93_usb_device/usb_power.c",
                     "${project}/92_usb_descriptors/usb_device.c",
@@ -304,7 +302,9 @@
                     "${project}/72_usb_dfu_entry/dfu.c",
                     "${project}/72_usb_dfu_entry/flash_ch572.c",
                     "${project}/72_usb_dfu_entry/platform.c",
-                    "${project}/72_usb_dfu_entry/entry.S"
+                    "${project}/72_usb_dfu_entry/entry.S",
+                    "${project}/73_dfu_runtime/boot.S",
+                    "${project}/72_usb_dfu_entry/boot.S"
                 ],
                 "optimization": {
                     "level": "size",

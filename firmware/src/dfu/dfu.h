@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "ch572/attributes.h"
 #include <stdbool.h>
+#include "flash_layout.h"
 #include "usb/usb_protocol.h"
 
 #define DFU_SETUP_STALL     (-1)
@@ -15,7 +16,7 @@
 #define DFU_DFUSE_ALT             1
 #define DFU_PROTOCOL_FOR_ALT(alt) (1 + (alt))
 #define DFU_TRANSFER              USB_DFU_TRANSFER_SIZE
-#define DFU_FLASH_SIZE            0x3c000u
+#define DFU_FLASH_SIZE            FLASH_CODE_END
 #define DFU_IDLE                  2
 #define DFU_SYNC                  3
 #define DFU_BUSY                  4
@@ -53,8 +54,8 @@
 #define DFU_POLL_PROGRAM_MS    20
 #define DFU_POLL_IDLE_MS       1
 
-/* AN3156 Leave: DNLOAD(length=0), then completed GETSTATUS -> MCU reset.
- * Address pointer must be zero for CH572 reset boot. Never Cortex-M +4. */
+/* AN3156 Leave: select address zero, DNLOAD(length=0), then complete
+ * GETSTATUS. The MCU resets through the DFU boot entry. */
 extern uint8_t DFU_buffer[DFU_TRANSFER];
 extern uint8_t DFU_response[USB_DFU_STATUS_SIZE];
 extern uint8_t DFU_state, DFU_error;

@@ -2,15 +2,13 @@ ENTRY(__cold_start)
 __cold_start = 0;
 MEMORY
 {
-    FLASH (rx)  : ORIGIN = 0x00010000, LENGTH = 180224
-    ROUTER (rx) : ORIGIN = 0x00000000, LENGTH = 4K
-    DFUSTORE (rx) : ORIGIN = 0x00034000, LENGTH = 8K
+    FLASH (rx)  : ORIGIN = 0x00010000, LENGTH = 65536
+    DFUSTORE (rx) : ORIGIN = 0x00000000, LENGTH = 8K
     RAM   (xrw) : ORIGIN = 0x20000000, LENGTH = 12K
 }
 PROVIDE(__stack_size = 1536);
 SECTIONS
 {
-    .router_image : { KEEP(*(.router_image)) } > ROUTER
     .dfu_image : { KEEP(*(.dfu_image)) } > DFUSTORE
     .init : { KEEP(*(.init)) } > FLASH
     /* Align the RAM vector, without padding its Flash image to 1024 bytes.
@@ -150,5 +148,4 @@ SECTIONS
 ASSERT(MODE_mailbox == 0x20000090 && __role_mailbox_end == 0x200000d0, "Role mailbox/vector ABI")
 
 ASSERT(__flash_end <= 0x20000, "Dongle HOST overlaps the next bank")
-ASSERT(SIZEOF(.router_image) > 0 && SIZEOF(.router_image) <= 0x1000, "Router image is missing or oversized")
 ASSERT(SIZEOF(.dfu_image) == 8192, "DFU image is missing or oversized")

@@ -37,6 +37,10 @@
             {
                 "name": "95_platform",
                 "location": "../../src/dfu"
+            },
+            {
+                "name": "94_boot",
+                "location": "../../src/dfu"
             }
         ],
         "removedResources": [
@@ -106,7 +110,19 @@
                     "${project}/95_platform/dfu.c",
                     "${project}/95_platform/flash_ch572.c",
                     "${project}/95_platform/entry.S",
-                    "${project}/95_platform/usb_dfu_entry.S"
+                    "${project}/95_platform/usb_dfu_entry.S",
+                    "${project}/99_entry/boot.S",
+                    "${project}/98_dfu/boot.S",
+                    "${project}/97_usb_control/boot.S",
+                    "${project}/96_flash_ch572/boot.S",
+                    "${project}/95_platform/boot.S",
+                    "${project}/94_boot/usb_control.c",
+                    "${project}/94_boot/dfu_runtime.c",
+                    "${project}/94_boot/dfu.c",
+                    "${project}/94_boot/flash_ch572.c",
+                    "${project}/94_boot/platform.c",
+                    "${project}/94_boot/entry.S",
+                    "${project}/94_boot/usb_dfu_entry.S"
                 ],
                 "optimization": {
                     "level": "z",

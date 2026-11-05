@@ -45,6 +45,11 @@
             <type>2</type>
             <location>PARENT-2-PROJECT_LOC/src/dfu</location>
         </link>
+        <link>
+            <name>94_boot</name>
+            <type>2</type>
+            <location>PARENT-2-PROJECT_LOC/src/dfu</location>
+        </link>
     </linkedResources>
     <filteredResources>
         <filter>

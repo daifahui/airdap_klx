@@ -1,8 +1,8 @@
 #include "app_config.h"
-/* Complete-application adapter. All code before the tail jump is resident RAM.
+/* Complete-application adapter. All code before the boot jump is resident RAM.
  * The existing CLK_SetSysClock/CLOCK_SafeOperation RAM closure is used only BEFORE SRAM
  * overwrite, with the valid non-ISR caller stack. No old frame is returned to.
- * Tail dfu_enter independently enters M mode, quiesces everything, then copies.
+ * Boot dfu_enter independently enters M mode, quiesces everything, then copies.
  */
     .section .dfu_app_ram,"ax",@progbits
     .option norelax
@@ -17,7 +17,7 @@ USB_DfuEnterAtVector:
     li t0,0x88
     csrrc zero,0x800,t0
     mv s0,a0
-    /* CPU IE stays masked across the SRAM clock leaf. The independent tail
+    /* CPU IE stays masked across the SRAM clock leaf. The independent entry
      * masks PFIC before its ECALL/copy; none are re-enabled in this adapter. */
     li s1,0x40001000
     li s2,0x57
@@ -55,7 +55,7 @@ USB_DfuEnterAtVector:
     li a0,10
     jal ra,CLK_SetSysClock  /* SRAM closure: HSE/10, including LSI->HSE startup */
     /* Restart PLL from known parameters, then restore Flash SCK/wait strategy
-     * at conservative HSE/10 before fetching the tail entry word. */
+     * at conservative HSE/10 before fetching the boot entry word. */
     li t1,4
     sb s2,0x40(s1)
     sb s3,0x40(s1)
@@ -76,7 +76,7 @@ USB_DfuEnterAtVector:
     sb t1,5(t0)
     sb zero,0x40(s1)
     mv a0,s0
-    li t0,USB_DFU_POINTER_SLOT
+    li t0,FLASH_DFU_ENTRY_SLOT
     lw t0,0(t0)
     fence.i
     jr t0

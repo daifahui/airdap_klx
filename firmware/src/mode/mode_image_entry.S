@@ -50,13 +50,13 @@ MODE_MachineStart:
     beqz t1, 1f
     li t2, 1
     beq t1, t2, 2f
-    li t0, 0x20000
+    li t0, FLASH_TARGET_BASE
     jr t0
-1:  li t0, 0x1000
+1:  li t0, FLASH_LOCAL_BASE
     jr t0
-2:  li t0, 0x10000
+2:  li t0, FLASH_HOST_BASE
 #else
-    li t0, 0x10000
+    li t0, FLASH_HOST_BASE
 #endif
 
     jr t0
