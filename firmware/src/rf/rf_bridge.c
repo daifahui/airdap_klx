@@ -85,9 +85,7 @@ static volatile uint8_t  RF_rxReady, RF_rxActive, RF_resetRequested;
 
 static volatile uint8_t RF_phyBusy, RF_rxRearmed;
 
-#if APP_COMBINED_HOST
 extern volatile uint32_t *gptrLLEReg;
-#endif
 
 static uint64_t      RF_requestedSession;
 static volatile bool RF_stopped = true;
@@ -142,8 +140,7 @@ static uint8_t     RF_channelSettle;
 /* Optional owner hook; the USB implementation is strong and uses no RF RAM. */
 bool RF_BridgeTransportReset(void) __WEAK;
 
-#if (APP_COMBINED_HOST)
-/* Complete a PHY transaction without interleaving register sequences. An RX
+/* Both roles retain completed RX DMA until foreground consumes it. An RX
  * callback interrupted inside the API publishes its bank; the outer release
  * freezes that bank before foreground can read it. IRQs stay enabled. */
 static __HIGH_CODE void RF_ReleasePhy(uint8_t busy) {
@@ -154,7 +151,6 @@ static __HIGH_CODE void RF_ReleasePhy(uint8_t busy) {
         RF_phyBusy = 0;
     }
 }
-#endif
 
 /* The other existing RX DMA bank is idle throughout a continued TX turn.
  * TX_FINISH cannot rearm RX while MORE is set; foreground alone starts TX. */
@@ -417,11 +413,7 @@ static __HIGH_CODE bool RF_ReceiveDma(void) {
         ++RF_apiErrors;
     }
 
-#if APP_COMBINED_HOST
     RF_ReleasePhy(busy);
-#else
-    RF_phyBusy = busy;
-#endif
 
     return armed;
 }
@@ -441,14 +433,12 @@ __HIGH_CODE static void RF_RadioCallback(rfRole_States_t events, uint8_t id) {
         events &= ~RF_STATE_RX;
     }
     if (events & RF_STATE_RX) {
-#if APP_COMBINED_HOST
         /* Basic RX can receive another frame into the same hardware DMA.
          * Freeze the completed bank before publishing it to foreground.
          * A foreground PHY call must finish first; its exit / the IRQ tail
          * applies the same hold before foreground can consume the frame. */
         if (!RF_phyBusy)
             RFRole_Stop();
-#endif
 
         if (RF_rxReady) {
             ++RF_dmaOverflows;
@@ -477,7 +467,6 @@ __INTERRUPT __HIGH_CODE void BB_IRQHandler(void) {
 }
 
 __INTERRUPT __HIGH_CODE void LLE_IRQHandler(void) {
-#if APP_COMBINED_HOST
     /* RF Basic emits TX and RX as separate callbacks from one IRQ snapshot.
      * Do not change RX DMA inside the first callback while that same batch
      * still owns an unread RX completion/CRC result. Pure TX keeps early RX. */
@@ -486,13 +475,10 @@ __INTERRUPT __HIGH_CODE void LLE_IRQHandler(void) {
     if (gptrLLEReg[2] & gptrLLEReg[3] & 1U) {
         RF_phyBusy = 1;
     }
-#endif
 
     LLE_LibIRQHandler();
 
-#if APP_COMBINED_HOST
     RF_ReleasePhy(phyBusy);
-#endif
 }
 
 static __UNUSED void RF_Receive(void) {
@@ -698,11 +684,7 @@ static __RF_TRANSMIT_CODE void RF_Transmit(uint8_t discovery) {
     }
     if (discovery) {
         if (!RF_BridgeControlFrame(discovery)) {
-#if APP_COMBINED_HOST
             RF_ReleasePhy(0);
-#else
-            RF_phyBusy = 0;
-#endif
 
             return;
         }
@@ -733,11 +715,7 @@ static __RF_TRANSMIT_CODE void RF_Transmit(uint8_t discovery) {
         RF_deadline   = BSP_ms + RF_USB_TIMEOUT_MS;
     }
 
-#if APP_COMBINED_HOST
     RF_ReleasePhy(0);
-#else
-    RF_phyBusy = 0;
-#endif
 }
 
 /* Control frames use no stream space and cannot acknowledge/consume bytes.
@@ -1572,7 +1550,7 @@ __RF_BRIDGE_POLL_CODE void RF_BridgePoll(void) {
         RF_radioState = RADIO_IDLE;
         RF_nextPoll   = BSP_ms + 1;
         RF_Receive();
-        RF_phyBusy = 0;
+        RF_ReleasePhy(0);
 #endif
     }
     if (RF_radioState != RADIO_TX &&
