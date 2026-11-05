@@ -2,5 +2,5 @@
 #define VERSION_H
 
 /* USB bcdDevice, encoded as BCD. */
-#define FIRMWARE_VERSION 0x0100U
+#define FIRMWARE_VERSION 0x0101U
 #endif
