@@ -1,0 +1,11 @@
+*.d
+*.o
+*.crf
+*.lnp
+*.dep
+*.build_log.*
+JLinkLog.txt
+**/example/
+.dap_flash
+__pycache__
+dbg_*.log
