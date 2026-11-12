@@ -304,7 +304,9 @@
                     "${project}/72_usb_dfu_entry/platform.c",
                     "${project}/72_usb_dfu_entry/entry.S",
                     "${project}/73_dfu_runtime/boot.S",
-                    "${project}/72_usb_dfu_entry/boot.S"
+                    "${project}/72_usb_dfu_entry/boot.S",
+                    "${project}/97_main/cfg",
+                    "${project}/94_runtime/cfg"
                 ],
                 "optimization": {
                     "level": "size",

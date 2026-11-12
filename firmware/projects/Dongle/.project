@@ -175,6 +175,11 @@
             <type>2</type>
             <location>PARENT-2-PROJECT_LOC/src/dfu</location>
         </link>
+        <link>
+            <name>68_cfg</name>
+            <type>2</type>
+            <location>PARENT-2-PROJECT_LOC/src/cfg</location>
+        </link>
     </linkedResources>
     <filteredResources>
         <filter>

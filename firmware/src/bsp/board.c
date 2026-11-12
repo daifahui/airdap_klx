@@ -219,9 +219,24 @@ static __NO_INLINE void LED_Poll(void) {
     bool host = BSP_workMode == RF_ROLE_HOST;
 
     if (host && !RF_BridgePaired()) {
-        /* Role/discovery ownership stays with RF; LEDs only report the link. */
-        BSP_ledSample = UINT32_MAX;
-        R32_PA_CLR    = PIN_LED1 | PIN_LED2;
+        /* Role/discovery ownership stays with RF; LEDs only report the link.
+         * A bound Host waiting for its recorded peer gets a slow single pulse
+         * instead of the dark "no binding" state. */
+        if (!MODE_mailbox.binding.bound) {
+            BSP_ledSample = UINT32_MAX;
+            R32_PA_CLR    = PIN_LED1 | PIN_LED2;
+            return;
+        }
+        uint32_t now = BSP_ms;
+
+        if (BSP_ledSample == UINT32_MAX) {
+            BSP_ledSample = now;
+        }
+        uint32_t phase = (now - BSP_ledSample) % 1000U;
+        uint32_t on    = phase < 100U ? PIN_LED1 : 0;
+
+        R32_PA_SET = on;
+        R32_PA_CLR = (PIN_LED1 | PIN_LED2) & ~on;
         return;
     }
     if (host || (BSP_workMode == RF_ROLE_TARGET && !RF_BridgePaired())) {

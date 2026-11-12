@@ -10,6 +10,7 @@
 
 #if APP_COMBINED_HOST
 #include "mode/app_mode.h"
+#include "cfg/bind_store.h"
 #endif
 
 #include "runtime.h"
@@ -98,6 +99,12 @@ static bool             RF_discoveryDiscarded;
 
 #if APP_COMBINED_HOST
 static bool RF_suspendWaiting, RF_suspendAck;
+
+/* Peers heard on the public address, including UIDs rejected by the binding
+ * filter. Kept small and fixed so scan-only never allocates. */
+static rf_peer_t       RF_peers[RF_PEER_LIST_MAX];
+static uint8_t         RF_peerCount;
+static volatile uint8_t RF_scanOnly;
 #else
 static bool RF_sleepPower;
 #endif
@@ -838,6 +845,87 @@ bool RF_BridgeDiscovering(void) {
     return RF_discoveryPhase != DISCOVERY_OFF;
 }
 
+uint32_t RF_DiscoveryAddressForUid(const uint8_t uid[8]) {
+    return RF_DiscoveryAddress(uid);
+}
+
+#if APP_COMBINED_HOST
+bool RF_BridgeScanOnlyActive(void) {
+    return RF_scanOnly != 0;
+}
+
+/* Runs in the RF ISR before the binding filter; even a bound Host keeps
+ * seeing other peers while scanning. */
+static void RF_PeerRecord(const uint8_t *uid) {
+    uint32_t now  = BSP_ms;
+    uint8_t  slot = 0;
+
+    for (unsigned i = 0; i < (unsigned)RF_peerCount; ++i) {
+        if (!memcmp(RF_peers[i].uid, uid, RF_DISCOVERY_UID_SIZE)) {
+            RF_peers[i].last_seen = now;
+            return;
+        }
+    }
+    if ((unsigned)RF_peerCount < RF_PEER_LIST_MAX) {
+        slot = RF_peerCount++;
+    } else {
+        for (unsigned i = 1; i < RF_PEER_LIST_MAX; ++i) {
+            if ((int32_t)(RF_peers[i].last_seen - RF_peers[slot].last_seen) < 0)
+                slot = i;
+        }
+    }
+    memcpy(RF_peers[slot].uid, uid, RF_DISCOVERY_UID_SIZE);
+    RF_peers[slot].last_seen = now;
+}
+
+void RF_BridgeScanOnly(bool only) {
+    uint32_t irq     = BSP_IrqSave();
+    bool     waking  = only && !RF_scanOnly;
+    uint8_t  enabled = only ? 1U : 0U;
+
+    RF_scanOnly = enabled;
+    if (waking) {
+        RF_peerCount = 0;
+    }
+    BSP_IrqRestore(irq);
+
+    /* Foreground only: a fresh scan is required to see every peer again. */
+    if (waking && !RF_stopped)
+        (void)RF_BridgeDiscover(BSP_DiscoveryNonce());
+}
+
+void RF_BridgeForget(void) {
+    uint32_t irq = BSP_IrqSave();
+
+    for (unsigned i = 0; i < RF_DISCOVERY_UID_SIZE; ++i)
+        RF_binding.peer_uid[i] = 0;
+    RF_binding.peer_aa = 0;
+    RF_binding.bound   = 0;
+    RF_scanOnly        = 1;
+    RF_peerCount       = 0;
+    BSP_IrqRestore(irq);
+
+    if (!RF_stopped)
+        (void)RF_BridgeDiscover(BSP_DiscoveryNonce());
+}
+
+unsigned RF_BridgePeers(rf_peer_t *out, unsigned offset, unsigned max) {
+    uint32_t irq   = BSP_IrqSave();
+    unsigned total = RF_peerCount;
+    unsigned n     = 0;
+
+    if (out && offset < total) {
+        n = total - offset;
+        if (n > max)
+            n = max;
+        for (unsigned i = 0; i < n; ++i)
+            out[i] = RF_peers[offset + i];
+    }
+    BSP_IrqRestore(irq);
+    return total;
+}
+#endif
+
 uint32_t RF_BridgePairedAt(void) {
     return RF_discoveryPairedAt;
 }
@@ -870,6 +958,13 @@ static void RF_DiscoveryComplete(void) {
     RF_binding.bound  = 1;
 
 #if APP_COMBINED_HOST
+    /* First pairing with an unbound Host persists the peer. Staging only:
+     * BIND_Poll writes Flash from the foreground. */
+    if (!RF_scanOnly)
+        (void)BIND_RequestSave(RF_binding.peer_uid);
+#endif
+
+#if APP_COMBINED_HOST
     /* OUT was NAKed while unpaired. NAK tokens do not enter the USB ISR;
      * publish readiness to its endpoint owner instead of waiting for EP0. */
     if (connected)
@@ -898,6 +993,12 @@ static __NO_INLINE bool RF_DiscoveryReceive(const uint8_t *p, unsigned n) {
         wireAa |= (uint32_t)p[RF_DISCOVERY_AA_OFFSET + i] << (8 * i);
     if (!aa || wireAa != aa)
         return false;
+#if APP_COMBINED_HOST
+    /* Record before the binding filter so a bound Host still lists peers. */
+    if (RF_link.role == RF_ROLE_HOST && RF_discoveryPhase == DISCOVERY_SCAN &&
+        p[RF_DISCOVERY_KIND_OFFSET] == DISCOVERY_ADVERT && !session && challenge)
+        RF_PeerRecord(p + RF_DISCOVERY_UID_OFFSET);
+#endif
     if (RF_link.role == RF_ROLE_TARGET) {
         uint8_t uid[8];
 
@@ -910,6 +1011,13 @@ static __NO_INLINE bool RF_DiscoveryReceive(const uint8_t *p, unsigned n) {
         return false;
     if (RF_link.role == RF_ROLE_HOST) {
         if (p[RF_DISCOVERY_KIND_OFFSET] == DISCOVERY_ADVERT && !session && challenge) {
+#if APP_COMBINED_HOST
+            if (RF_scanOnly) {
+                /* Read-only scan: list the peer, never PROBE or pair. */
+                RF_Receive();
+                return true;
+            }
+#endif
             if (RF_discoveryPhase == DISCOVERY_SCAN) {
 #if APP_COMBINED_HOST
                 app_mode_status_t mode;

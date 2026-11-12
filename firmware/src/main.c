@@ -11,6 +11,10 @@
 #include "mode/mode_image.h"
 #include "mode/mode_memory.h"
 
+#if APP_COMBINED_HOST
+#include "cfg/bind_store.h"
+#endif
+
 #if APP_HAS_DAP
 #include "dap/dap_config.h"
 #include "dap/swj.h"
@@ -179,6 +183,12 @@ int main(void) {
 #if APP_HAS_RF_UART
         }
 #endif
+#endif
+
+#if APP_COMBINED_HOST
+        /* After the RF/DAP owner: the write pauses RF only once a complete
+         * command has returned, and never runs inside an ISR. */
+        BIND_Poll();
 #endif
 
 #if APP_HAS_USB

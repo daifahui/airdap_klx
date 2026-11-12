@@ -47,6 +47,35 @@ AirDAP的LED可以表示当前工作状态。其中：
 * 在有DAP数据传输时，Local模式和RF Target模式使用LED表示connect和running状态。
 * 在有串口数据传输时，Local模式和RF Target模式使用LED表示TX和RX正有数据传输。
 
+## 目标绑定
+
+Host（插电脑的一端）首次配对成功后会记住 Target 的 8 字节 UID，保存在 Host Flash 的
+`0x1E000`/`0x1F000` 两个扇区中，掉电不丢。之后的启动行为：
+
+* 已绑定：只连接该 UID；目标不在线时保持 Host 无限等待，不会降级到 Local，也不会连接其他
+  Target；即使不插 USB 也保持 Host。
+* 未绑定：保持原有行为，2 秒窗口内连接第一个听到的 Target，配对成功后自动保存。
+* Host 已绑定但目标未上线时，LED1 每 1 秒闪一次；未绑定时两灯熄灭。
+
+上位机可以通过 USB 厂商请求查询状态、指定绑定、忘记绑定或进入只扫描模式，协议见
+`doc/01_bind_guide/binding_zh.md`。脚本示例：
+
+```bash
+python3 tool/01_airdap_bind/airdap_bind.py list
+python3 tool/01_airdap_bind/airdap_bind.py --serial <16位UID> show
+python3 tool/01_airdap_bind/airdap_bind.py --serial <16位UID> bind 0011223344556677
+python3 tool/01_airdap_bind/airdap_bind.py --serial <16位UID> forget
+python3 tool/01_airdap_bind/airdap_bind.py --serial <16位UID> peers
+python3 tool/01_airdap_bind/airdap_bind.py --serial <16位UID> exit-wireless
+```
+
+注意事项：
+
+* 首次配对应先给 Target 上电，再给 Host 上电或插 USB；否则 2 秒窗口结束后 Host 会退到 Local。
+* `forget` 后进入 scan-only，可以列出周围所有 Target；只有 `bind` 或重新上电才会退出。
+* DFU 升级覆盖 `0x0~0x3C000`，可能清掉绑定记录，升级后需要重新配对或重新 bind。
+* `exit-wireless` 只在本次运行中切到 Local，断电后仍按绑定恢复 Host。
+
 ## 烧录方法
 
 初次使用时，请进入ISP下载模式（按住ISP按钮插入USB，在出厂时默认直接进入ISP），并使用`wchisp`等工具下载`.hex`或`.bin`文件。成功烧录后，后续即可通过DFU通道更新固件。

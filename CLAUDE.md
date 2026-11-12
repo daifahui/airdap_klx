@@ -127,9 +127,9 @@ python3 .github/scripts/verify_build.py
 
 该脚本会检查：
 
-- `_start`、`__flash_end` 是否落在对应 bank；
+- `_start`、`__flash_end` 是否落在对应 bank；Host/Dongle 还必须 `<= 0x1E000`；
 - 栈底、mailbox 地址 `0x20000090`、mailbox 结束 `0x200000D0`；
-- `FullRole.bin` 是否等于四个 bank 按地址拼接；
+- `FullRole.bin` 是否等于四个 bank 按地址拼接，且 `0x1E000~0x20000` 保持擦除态；
 - `Dongle.bin` 是否等于 DFU + Host；
 - DFU 镜像恰为 8192 字节，入口指针位于 `0x1FFC`；
 - `.dfu` 包尾部 VID/PID/CRC 是否正确。
@@ -145,6 +145,7 @@ python3 .github/scripts/verify_build.py
 | DFU | `0x00000000` | 8 KB | 冷启动路由 + DFU 应用 |
 | Local | `0x00002000` | 56 KB | 有线角色 |
 | Host | `0x00010000` | 64 KB | 无线 Host / 启动扫描角色 |
+| Host 绑定 A/B | `0x0001E000` / `0x0001F000` | 4 KB × 2 | `bind_store` 记录，Host 镜像不得越过 `0x1E000` |
 | Target | `0x00020000` | 112 KB | 无线 Target |
 | 结束 | `0x0003C000` | — | 应用上限 |
 
@@ -391,6 +392,8 @@ ISP 按键由硬件在复位时拉电平进入 ROM ISP，不占固件 GPIO。
 11. **DFU 运行在 RAM**：DFU 代码、栈、数据都在 `0x20000000` 起；不要给它增加超出 8 KB 的
     Flash 载荷或破坏 `0x1FFC` 入口指针。
 12. **HardFault 处理**：释放目标引脚并两灯常亮，随后看门狗复位进入 DFU；不要改成静默重启。
+13. **Host 绑定区 `0x1E000~0x20000` 只能由 `cfg/bind_store.c` 访问**：Host/Dongle 链接断言与
+    CI 都会拦截越过 `0x1E000` 的镜像；`0x3F000` 以上是芯片配置区（UID 在 `0x3F018`），任何代码都不得写入。
 
 ## 11. 常见修改指南
 
@@ -470,7 +473,7 @@ ISP 按键由硬件在复位时拉电平进入 ROM ISP，不占固件 GPIO。
 
 LED 语义：
 
-- Host：未配对两灯灭；已配对每 2 s 双闪 200 ms。
+- Host：未绑定两灯灭；已绑定但目标不在线为 1 s 单脉冲；已配对每 2 s 双闪 200 ms。
 - Target：未配对 1 s 交替闪；已配对灭；DAP 活动显示 connect/running；串口活动脉冲反相。
 - Local：DAP connect/running + TX/RX 活动脉冲。
 - HardFault：两灯常亮。
@@ -489,6 +492,21 @@ LED 语义：
 9. `firmware/src/uart/uart_io.c` + `uart/uart_line.c`（物理串口）
 10. `firmware/src/dfu/`（升级链）
 11. `firmware/projects/ld/*.ld` 与 `.github/scripts/verify_build.py`（布局校验）
+
+## 15. 目标绑定（Host/Dongle）
+
+- 记录：`src/cfg/bind_store.c`，32 字节记录（magic/version/flags/uid/seq/crc）在两扇区
+  `0x1E000` / `0x1F000` 间 ping-pong；写前擦旧扇区、写 seq+1、回读校验，失败时保留旧记录。
+- 启动：`MODE_ImageBoot()` 在模式控制器初始化前调用 `BIND_Load()`，填充
+  `MODE_mailbox.binding.peer_uid/peer_aa/bound`；`MODE_AppModeSetBound()` 让 Host 直接 READY，
+  目标不在线时无限等待，不降级 Local，也不连接其他 UID。
+- 配对：`RF_DiscoveryComplete()` 在 Host 分支把 peer UID 交给 `BIND_RequestSave()`；
+  Flash 擦写只在主循环 `BIND_Poll()` 中执行（位于 `RF_DapPoll` 之后），先暂停射频并确认
+  `RF_DapIdle()`，ISR 只登记请求。
+- 解绑 / scan-only：`USB 0x03 OUT` 清记录并 `RF_BridgeForget()`；`USB 0x04 OUT` 只进入
+  scan-only。scan-only 记录 ADVERT、不发 PROBE、不自动配对，直到 BIND 或复位。
+- 上位机协议与脚本：`doc/01_bind_guide/binding_zh.md`、`tool/01_airdap_bind/airdap_bind.py`。
+- 升级固件（DFU 覆盖 `0x0~0x3C000`）可能擦掉绑定记录，升级后需重新配对或重新 bind。
 
 ## 15. 术语表
 

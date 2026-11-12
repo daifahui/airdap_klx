@@ -25,6 +25,10 @@ static struct {
 
 _Static_assert(sizeof(MODE_state) == 24, "Mode controller SRAM budget");
 
+/* Loaded from the Host binding record. Kept outside MODE_state so the saved
+ * six-word handoff ABI is unchanged. */
+static bool MODE_bound;
+
 static bool MODE_WindowOpen(uint32_t now) {
     return (uint32_t)(now - MODE_state.phase_started) < MODE_state.window_ms;
 }
@@ -59,7 +63,7 @@ static bool MODE_Automatic(void) {
 }
 
 static void MODE_Decide(uint32_t now) {
-    if (!MODE_Automatic() || MODE_state.phase != APP_MODE_PAIRING)
+    if (MODE_bound || !MODE_Automatic() || MODE_state.phase != APP_MODE_PAIRING)
         return;
     if (MODE_WindowOpen(now) && (MODE_state.available_mask & USB_TIMELY) &&
         (MODE_state.flags & APP_MODE_FLAG_PEER_MATCHED))
@@ -96,17 +100,47 @@ void MODE_AppModeInit(uint32_t now, uint32_t availableMask, uint32_t bootWindowM
     MODE_state.phase                       = APP_MODE_READY;
     MODE_state.result                      = APP_MODE_SUCCESS;
 #else
-    MODE_state.available_mask = (uint8_t)(availableMask & APP_MODE_ALL);
-    bool radio                = (availableMask & APP_MODE_BIT(APP_WORK_RF_HOST)) != 0;
+    if (MODE_bound) {
+        /* The stored peer is the only possible Host session. Keep LOCAL and
+         * TARGET unavailable to the automatic policy while waiting. */
+        MODE_state.available_mask = APP_MODE_ALL;
+        MODE_state.window_ms      = 0;
+        MODE_state.current = MODE_state.target = APP_WORK_RF_HOST;
+        MODE_state.source                      = APP_MODE_AUTOMATIC;
+        MODE_state.error                       = APP_MODE_ERROR_NONE;
+        MODE_state.flags                       = 0;
+        MODE_state.phase                       = APP_MODE_READY;
+        MODE_state.result                      = APP_MODE_SUCCESS;
+    } else {
+        MODE_state.available_mask = (uint8_t)(availableMask & APP_MODE_ALL);
+        bool radio                = (availableMask & APP_MODE_BIT(APP_WORK_RF_HOST)) != 0;
 
-    MODE_state.current = radio ? APP_WORK_NONE : APP_WORK_LOCAL;
-    MODE_state.target  = MODE_state.current;
-    MODE_state.source  = APP_MODE_AUTOMATIC;
-    MODE_state.error   = APP_MODE_ERROR_NONE;
-    MODE_state.flags   = radio ? AUTO_ENABLED_FLAG : 0;
-    MODE_state.phase   = radio ? APP_MODE_PRE_DISCONNECT : APP_MODE_READY;
-    MODE_state.result  = radio ? APP_MODE_NO_RESULT : APP_MODE_SUCCESS;
+        MODE_state.current = radio ? APP_WORK_NONE : APP_WORK_LOCAL;
+        MODE_state.target  = MODE_state.current;
+        MODE_state.source  = APP_MODE_AUTOMATIC;
+        MODE_state.error   = APP_MODE_ERROR_NONE;
+        MODE_state.flags   = radio ? AUTO_ENABLED_FLAG : 0;
+        MODE_state.phase   = radio ? APP_MODE_PRE_DISCONNECT : APP_MODE_READY;
+        MODE_state.result  = radio ? APP_MODE_NO_RESULT : APP_MODE_SUCCESS;
+    }
 #endif
+}
+
+void MODE_AppModeSetBound(bool bound) {
+    MODE_bound = bound;
+    if (bound && MODE_Automatic() && MODE_state.phase != APP_MODE_READY) {
+        /* A runtime scan-only request can arrive while the boot window is
+         * still open; pin the already-running Host before that window ends. */
+        MODE_state.flags &=
+            (uint8_t)~(AUTO_ENABLED_FLAG | APP_MODE_FLAG_MATCHING | APP_MODE_FLAG_PEER_MATCHED);
+        MODE_state.current = MODE_state.target = APP_WORK_RF_HOST;
+        MODE_state.phase                       = APP_MODE_READY;
+        MODE_state.window_ms                   = 0;
+        MODE_state.result                      = APP_MODE_SUCCESS;
+        MODE_state.error                       = APP_MODE_ERROR_NONE;
+        ++MODE_state.sequence;
+        MODE_state.completed_sequence = MODE_state.sequence;
+    }
 }
 
 bool MODE_AppModePreDisconnect(void) {

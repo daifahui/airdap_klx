@@ -17,6 +17,10 @@ extern volatile uint8_t RF_dapReceiving;
 
 void RF_DapAbort(uint8_t source);
 
+/* True when no remote DAP transaction is in flight; used by binding writes. */
+
+bool RF_DapIdle(void);
+
 /* Called only by the USB owner; UART's foreground producer excludes USB. */
 
 void RF_DapTransmit(void);

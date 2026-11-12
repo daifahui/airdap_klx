@@ -16,6 +16,10 @@
 #include "rf/rf_uart.h"
 #endif
 
+#if APP_COMBINED_HOST
+#include "cfg/bind_store.h"
+#endif
+
 #if !APP_COMBINED_HOST
 #include "uart/uart_io.h"
 #endif
@@ -37,6 +41,26 @@ bool MODE_ImageWarm(void) {
 }
 
 void MODE_ImageBoot(void) {
+#if APP_COMBINED_HOST
+    /* The mailbox is cleared by a true reset; reload the persistent peer so a
+     * bound Host only ever answers that UID. */
+    uint8_t bindUid[BIND_UID_SIZE];
+
+    BIND_Load();
+    bool bound = BIND_Get(bindUid);
+
+    MODE_AppModeSetBound(bound);
+    if (bound) {
+        for (unsigned i = 0; i < BIND_UID_SIZE; ++i)
+            MODE_mailbox.binding.peer_uid[i] = bindUid[i];
+        MODE_mailbox.binding.peer_aa = RF_DiscoveryAddressForUid(bindUid);
+        MODE_mailbox.binding.bound   = 1;
+    } else {
+        MODE_mailbox.binding.peer_aa = 0;
+        MODE_mailbox.binding.bound   = 0;
+    }
+#endif
+
     if (MODE_ImageWarm()) {
         MODE_AppModeRestore(MODE_mailbox.controller);
         BSP_ms = MODE_mailbox.milliseconds;

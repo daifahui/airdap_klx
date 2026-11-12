@@ -140,6 +140,7 @@ SECTIONS
     ASSERT((__stack_bottom & 255) == 0 && (_eusrstack & 15) == 0, "Stack bounds are misaligned")
     ASSERT(__ram_end <= __stack_bottom, "RAM data/code overlaps the reserved stack")
     ASSERT(__flash_end <= ORIGIN(FLASH) + LENGTH(FLASH), "application overlaps BootLoader")
+    ASSERT(__flash_end <= 0x1E000, "application overlaps the peer-binding sectors")
     ASSERT(SIZEOF(.init) == 4, "WCH option word requires a 4-byte startup jump")
     ASSERT(LOADADDR(.highcode) == 65540, "WCH vector Flash image must start at address 4")
     ASSERT((_vector_base & 1023) == 0, "RAM interrupt vector must be 1024-byte aligned")

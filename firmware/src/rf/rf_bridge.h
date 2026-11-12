@@ -7,6 +7,38 @@
 /* A missing peer releases the private session before the USB scan times out. */
 #define RF_DISCOVERY_LEASE_MS 900U
 
+/* Host discovery list: one entry per peer heard on the public address. */
+
+#define RF_PEER_LIST_MAX 8U
+typedef struct {
+    uint8_t  uid[8];
+    uint32_t last_seen;
+} rf_peer_t;
+
+/* Bits reported to the USB binding query. */
+#define RF_BIND_FLAG_BOUND     0x01U
+#define RF_BIND_FLAG_PAIRED    0x02U
+#define RF_BIND_FLAG_SCAN_ONLY 0x04U
+
+uint32_t RF_DiscoveryAddressForUid(const uint8_t uid[8]);
+
+#if APP_COMBINED_HOST
+bool RF_BridgeScanOnlyActive(void);
+
+/* Scan-only records ADVERTs without PROBE/OFFER. Enabling it drops the
+ * current candidate/session and restarts discovery from a fresh list. */
+
+void RF_BridgeScanOnly(bool only);
+
+/* Foreground only: clear peer_uid/bound and resume discovery in scan-only. */
+
+void RF_BridgeForget(void);
+
+/* Copies up to max entries starting at offset and returns the valid count. */
+
+unsigned RF_BridgePeers(rf_peer_t *out, unsigned offset, unsigned max);
+#endif
+
 /* Foreground only: stop/start requires the USB owner to retire/cancel its DMA
  * ownership first. Every start clears the session; configure a fresh shared
  * nonzero session before submitting data. Failure leaves RF stopped. */

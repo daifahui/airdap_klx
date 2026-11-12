@@ -141,6 +141,10 @@
             {
                 "name": "69_usb_dfu_entry",
                 "location": "../../src/dfu"
+            },
+            {
+                "name": "68_cfg",
+                "location": "../../src/cfg"
             }
         ],
         "removedResources": [
@@ -329,7 +333,9 @@
                     "${project}/69_usb_dfu_entry/platform.c",
                     "${project}/69_usb_dfu_entry/entry.S",
                     "${project}/70_dfu_runtime/boot.S",
-                    "${project}/69_usb_dfu_entry/boot.S"
+                    "${project}/69_usb_dfu_entry/boot.S",
+                    "${project}/97_main/cfg",
+                    "${project}/94_runtime/cfg"
                 ],
                 "optimization": {
                     "level": "size",

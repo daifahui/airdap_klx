@@ -11,4 +11,9 @@
 #define FLASH_LOCAL_BASE     FLASH_APP_BASE
 #define FLASH_HOST_BASE      0x00010000
 #define FLASH_TARGET_BASE    0x00020000
+
+/* Host peer-binding records: two alternating sectors at the end of the Host
+ * bank. The Host image must never extend into them (see host.ld/CI). */
+#define FLASH_BIND_A 0x0001E000
+#define FLASH_BIND_B 0x0001F000
 #endif

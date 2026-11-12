@@ -100,6 +100,12 @@ void MODE_AppModeForgetCandidate(void);
 
 void MODE_AppModeInit(uint32_t now, uint32_t availableMask, uint32_t bootWindowMs);
 
+/* Runtime pin loaded from the Host binding record. It is not part of the six
+ * saved words: a bound Host never auto-selects LOCAL/TARGET or starts a scan
+ * window, and a scan-only run still reports Host readiness. */
+
+void MODE_AppModeSetBound(bool bound);
+
 void MODE_AppModeNoteUsbConfigured(uint32_t now);
 
 void MODE_AppModePoll(uint32_t now);

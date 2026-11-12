@@ -402,7 +402,9 @@
                     "${project}/65_identity/clock_control.c",
                     "${project}/65_identity/board.c",
                     "${project}/64_flash_io/startup.S",
-                    "${project}/64_flash_io/clock.c"
+                    "${project}/64_flash_io/clock.c",
+                    "${project}/97_main/cfg",
+                    "${project}/94_runtime/cfg"
                 ],
                 "optimization": {
                     "level": "size",

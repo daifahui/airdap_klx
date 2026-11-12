@@ -21,7 +21,7 @@ def symbols(path):
         return {s.name: int(s['st_value']) for s in elf.get_section_by_name('.symtab').iter_symbols()}
 
 
-def bank(name, start, end):
+def bank(name, start, end, limit=None):
     out = PROJECTS / name / 'obj'
     sym = symbols(out / (name + '.elf'))
     assert sym['__stack_size'] == 768, name
@@ -31,7 +31,7 @@ def bank(name, start, end):
     assert sym['MODE_mailbox'] == 0x20000090, name
     assert sym['__role_mailbox_end'] == 0x200000D0, name
     assert sym['_start'] == start, name
-    assert start < sym['__flash_end'] <= end, name
+    assert start < sym['__flash_end'] <= (limit if limit is not None else end), name
     image = (out / (name + '.bin')).read_bytes()
     assert image[0x14:0x18] == bytes.fromhex('a9bdf9f3'), name
     return {'ram_including_stack': sym['__ram_end'] - 0x20000000 + 768,
@@ -64,9 +64,10 @@ def main():
     for name, expected in expected_defines.items():
         actual = defines(name)
         assert actual == expected, (name, actual)
-    for name, start, end in (('Local', 0x2000, 0x10000), ('Host', 0x10000, 0x20000),
-                             ('Target', 0x20000, 0x3C000)):
-        report['banks'][name] = bank(name, start, end)
+    for name, start, end, limit in (('Local', 0x2000, 0x10000, None),
+                                    ('Host', 0x10000, 0x20000, 0x1E000),
+                                    ('Target', 0x20000, 0x3C000, None)):
+        report['banks'][name] = bank(name, start, end, limit)
 
     dfu_sym = symbols(PROJECTS / 'DFU/obj/DFU.elf')
     dfu_image = (PROJECTS / 'DFU/obj/DFU.bin').read_bytes()
@@ -97,7 +98,7 @@ def main():
     assert dongle_sym['__ram_end'] <= dongle_sym['__stack_bottom']
     assert dongle_sym['MODE_mailbox'] == 0x20000090
     assert dongle_sym['__role_mailbox_end'] == 0x200000D0
-    assert 0x10000 < dongle_sym['__flash_end'] <= 0x20000
+    assert 0x10000 < dongle_sym['__flash_end'] <= 0x1E000
     dongle_image = (PROJECTS / 'Dongle/obj/Dongle.bin').read_bytes()
     assert len(dongle_image) == dongle_sym['__flash_end']
     assert dongle_image[:0x2000] == dfu_image
@@ -117,13 +118,17 @@ def main():
             banks = [('DFU', 0), ('Local', 0x2000), ('Host', 0x10000), ('Target', 0x20000)]
             for bank_name, offset in banks:
                 chunk = (PROJECTS / bank_name / 'obj' / (bank_name + '.bin')).read_bytes()
+                # 0x1E000..0x20000 holds the Host peer-binding sectors.
+                assert not chunk or offset + len(chunk) <= 0x1E000 or offset >= 0x20000, bank_name
                 assert not any(v != 0xFF for v in expected[offset:offset + len(chunk)])
                 expected[offset:offset + len(chunk)] = chunk
+            assert not any(v != 0xFF for v in payload[0x1E000:0x20000])
             assert payload == expected
         else:
             # Dongle contains the same boot DFU and only a HOST application.
             assert payload[:0x2000] == dfu_image
             assert not any(v != 0xFF for v in payload[0x2000:0x10000])
+            assert not any(v != 0xFF for v in payload[0x1E000:0x20000])
         package = (out / (name + '.dfu')).read_bytes()
         # DFU runs from SRAM and can update itself at address zero.
         assert package[:-16] == payload and package[-8:-4] == b'UFD\x10', name

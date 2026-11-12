@@ -13,6 +13,10 @@
 #include "mode/mode_image.h"
 #include "runtime.h"
 
+#if APP_COMBINED_HOST
+#include "cfg/bind_store.h"
+#endif
+
 #if APP_HAS_RF_DAP
 #include "rf/rf_dap.h"
 #endif
@@ -129,7 +133,9 @@ enum ep0_phase {
     EP0_LINE_WAIT,
     EP0_DTR_WAIT,
     EP0_BREAK_WAIT,
-    EP0_HID_REPORT_OUT
+    EP0_HID_REPORT_OUT,
+    EP0_BIND_OUT,
+    EP0_BIND_STATUS
 };
 static enum ep0_phase USB_controlPhase;
 static const uint8_t *USB_controlData;
@@ -137,6 +143,40 @@ static uint16_t       USB_controlRemaining;
 static uint8_t        USB_controlZlp, USB_pendingAddress = 0xFF;
 static uint32_t       CDC_controlWaitAt;
 static uint8_t        USB_smallReply[8] __ALIGNED(4);
+
+#if APP_COMBINED_HOST
+#define USB_BIND_NONE        0U
+#define USB_BIND_SAVE        1U
+#define USB_BIND_CLEAR       2U
+#define USB_BIND_SCAN        3U
+#define USB_BIND_STATUS_SIZE 32U
+#define USB_PEER_PAGE_SIZE   32U
+#define USB_PEER_PAGE_ITEMS  2U
+#define USB_PEER_PAGES       4U
+#define USB_PEER_ENTRY_SIZE  12U
+
+/* SETUP only stages the command; its status ACK posts the foreground job. */
+static uint8_t USB_bindCommand;
+
+static uint8_t USB_HexNibble(char c) {
+    if (c >= '0' && c <= '9')
+        return (uint8_t)(c - '0');
+    if (c >= 'A' && c <= 'F')
+        return (uint8_t)(c - 'A' + 10);
+    if (c >= 'a' && c <= 'f')
+        return (uint8_t)(c - 'a' + 10);
+    return 0;
+}
+
+/* BSP_serial is the only resident identity copy: the boot Flash overlay is
+ * reused by the RF queues once the radio starts, so no UID read is allowed. */
+static void USB_OwnUid(uint8_t uid[8]) {
+    for (unsigned i = 0; i < 8; ++i) {
+        uid[i] = (uint8_t)((USB_HexNibble(BSP_serial[2 * i]) << 4) |
+                           USB_HexNibble(BSP_serial[2 * i + 1]));
+    }
+}
+#endif
 
 #if BSP_HAS_TARGET_POWER
 static uint8_t USB_powerPending = UINT8_MAX;
@@ -182,6 +222,9 @@ static void USB_Ep0Stall(void) {
     MODE_pending              = UINT8_MAX;
     MODE_configurationPending = UINT8_MAX;
     MODE_AppModeHoldAuto(false);
+#if APP_COMBINED_HOST
+    USB_bindCommand  = USB_BIND_NONE;
+#endif
     USB_controlPhase = EP0_IDLE;
     R8_UEP0_CTRL     = RB_UEP_T_TOG | RB_UEP_R_TOG | UEP_T_RES_STALL | UEP_R_RES_STALL;
 }
@@ -467,6 +510,9 @@ static __NO_INLINE void USB_Ep0Setup(void) {
     MODE_pending              = UINT8_MAX;
     MODE_configurationPending = UINT8_MAX;
     MODE_AppModeHoldAuto(false);
+#if APP_COMBINED_HOST
+    USB_bindCommand = USB_BIND_NONE;
+#endif
 
     /* SETUP_ACT guarantees eight request bytes; RX_LEN retains the previous
      * receive length on CH572 and must not be used to validate SETUP. */
@@ -525,6 +571,93 @@ static __NO_INLINE void USB_Ep0Setup(void) {
         USB_Ep0Stall();
         return;
     }
+
+#if APP_COMBINED_HOST
+    if ((type & USB_REQ_TYP_MASK) == USB_REQ_TYP_VENDOR && req == USB_BIND_REQUEST) {
+        if (type == USB_RT_IN_VENDOR_DEVICE && !value && !index &&
+            (unsigned)length == USB_BIND_STATUS_SIZE) {
+            uint8_t *reply = (uint8_t *)USB_controlScratch.reply;
+            uint8_t  uid[BIND_UID_SIZE];
+            uint8_t  flags = 0;
+
+            for (unsigned i = 0; i < USB_BIND_STATUS_SIZE; ++i) {
+                reply[i] = 0;
+            }
+            if (BIND_Get(uid)) {
+                flags |= RF_BIND_FLAG_BOUND;
+                for (unsigned i = 0; i < BIND_UID_SIZE; ++i) {
+                    reply[8 + i] = uid[i];
+                }
+            }
+            if (RF_BridgePaired()) {
+                flags |= RF_BIND_FLAG_PAIRED;
+            }
+            if (RF_BridgeScanOnlyActive()) {
+                flags |= RF_BIND_FLAG_SCAN_ONLY;
+            }
+            reply[0] = flags;
+            USB_OwnUid(reply + 16);
+            USB_Ep0Read(reply, USB_BIND_STATUS_SIZE, length);
+            return;
+        }
+        if (type == USB_RT_OUT_VENDOR_DEVICE && !value && !index && USB_configured &&
+            ((unsigned)length == BIND_UID_SIZE || !length)) {
+            USB_bindCommand = length ? USB_BIND_SAVE : USB_BIND_CLEAR;
+            if (!length) {
+                USB_Ep0Status();
+                USB_controlPhase = EP0_BIND_STATUS;
+            } else {
+                USB_controlPhase = EP0_BIND_OUT;
+                R8_UEP0_CTRL     = RB_UEP_R_TOG | UEP_R_RES_ACK | UEP_T_RES_NAK;
+            }
+            return;
+        }
+        USB_Ep0Stall();
+        return;
+    }
+
+    if ((type & USB_REQ_TYP_MASK) == USB_REQ_TYP_VENDOR && req == USB_PEERS_REQUEST) {
+        if (type == USB_RT_IN_VENDOR_DEVICE && !value && (unsigned)index < USB_PEER_PAGES &&
+            (unsigned)length == USB_PEER_PAGE_SIZE && USB_configured) {
+            uint8_t  *reply  = (uint8_t *)USB_controlScratch.reply;
+            rf_peer_t peers[USB_PEER_PAGE_ITEMS];
+            unsigned  offset = index * USB_PEER_PAGE_ITEMS;
+            unsigned  total  = RF_BridgePeers(peers, offset, USB_PEER_PAGE_ITEMS);
+            unsigned  count  = total > offset ? total - offset : 0;
+
+            if (count > USB_PEER_PAGE_ITEMS) {
+                count = USB_PEER_PAGE_ITEMS;
+            }
+            for (unsigned i = 0; i < USB_PEER_PAGE_SIZE; ++i) {
+                reply[i] = 0;
+            }
+            reply[0] = total;
+            reply[1] = index;
+            reply[2] = count;
+            for (unsigned e = 0; e < count; ++e) {
+                uint8_t *entry = reply + 4 + e * USB_PEER_ENTRY_SIZE;
+
+                for (unsigned i = 0; i < 8; ++i) {
+                    entry[i] = peers[e].uid[i];
+                }
+                entry[8]  = peers[e].last_seen;
+                entry[9]  = peers[e].last_seen >> 8;
+                entry[10] = peers[e].last_seen >> 16;
+                entry[11] = peers[e].last_seen >> 24;
+            }
+            USB_Ep0Read(reply, USB_PEER_PAGE_SIZE, length);
+            return;
+        }
+        if (type == USB_RT_OUT_VENDOR_DEVICE && !value && !index && !length && USB_configured) {
+            USB_bindCommand = USB_BIND_SCAN;
+            USB_Ep0Status();
+            USB_controlPhase = EP0_BIND_STATUS;
+            return;
+        }
+        USB_Ep0Stall();
+        return;
+    }
+#endif
 
 #if USB_DFU_ENABLE
     if (USB_configured) {
@@ -844,7 +977,11 @@ static __NO_INLINE void USB_Ep0In(bool setupPending) {
             R8_UEP0_CTRL     = RB_UEP_R_TOG | UEP_R_RES_ACK | UEP_T_RES_NAK;
         }
     } else if (USB_controlPhase == EP0_STATUS_IN || USB_controlPhase == EP0_LINE_STATUS ||
-               USB_controlPhase == EP0_DTR_STATUS || USB_controlPhase == EP0_BREAK_STATUS) {
+               USB_controlPhase == EP0_DTR_STATUS || USB_controlPhase == EP0_BREAK_STATUS
+#if APP_COMBINED_HOST
+               || USB_controlPhase == EP0_BIND_STATUS
+#endif
+    ) {
 #if USB_DFU_ENABLE
         if (!setupPending) {
             if (DFU_RuntimeStatusComplete())
@@ -893,6 +1030,31 @@ static __NO_INLINE void USB_Ep0In(bool setupPending) {
             UART_Break((((uint16_t)USB_smallReply[0]) | ((uint16_t)USB_smallReply[1] << 8)));
 #endif
         }
+
+#if APP_COMBINED_HOST
+        if (USB_controlPhase == EP0_BIND_STATUS) {
+            /* The control transfer is acknowledged: hand the staged command to
+             * the foreground. Flash and RF discovery never run in this ISR. */
+            const uint8_t *staged  = (const uint8_t *)USB_controlScratch.reply;
+            uint8_t        command = USB_bindCommand;
+
+            USB_bindCommand = USB_BIND_NONE;
+            if (command == USB_BIND_SAVE) {
+                uint8_t uid[BIND_UID_SIZE];
+
+                for (unsigned i = 0; i < BIND_UID_SIZE; ++i) {
+                    uid[i] = staged[i];
+                }
+                if (RF_DiscoveryAddressForUid(uid)) {
+                    (void)BIND_RequestSave(uid);
+                }
+            } else if (command == USB_BIND_CLEAR) {
+                (void)BIND_RequestClear();
+            } else if (command == USB_BIND_SCAN) {
+                (void)BIND_RequestScanOnly();
+            }
+        }
+#endif
 
 #if APP_HAS_RF_UART
         RF_UartHoldControls(false);
@@ -965,6 +1127,24 @@ static __NO_INLINE void USB_Ep0Out(void) {
         __asm__ volatile("" ::: "memory");
         DAP_transport.hid_control = 2;
         USB_Ep0Status();
+        return;
+    }
+#endif
+
+#if APP_COMBINED_HOST
+    if (USB_controlPhase == EP0_BIND_OUT) {
+        if (R8_USB_RX_LEN != (uint8_t)BIND_UID_SIZE ||
+            !RF_DiscoveryAddressForUid(USB_ep0)) {
+            USB_Ep0Stall();
+            return;
+        }
+        uint8_t *staged = (uint8_t *)USB_controlScratch.reply;
+
+        for (unsigned i = 0; i < BIND_UID_SIZE; ++i) {
+            staged[i] = USB_ep0[i];
+        }
+        USB_Ep0Status();
+        USB_controlPhase = EP0_BIND_STATUS;
         return;
     }
 #endif

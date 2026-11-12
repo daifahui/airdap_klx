@@ -27,6 +27,10 @@ void RF_DapAbort(uint8_t source) {
     RF_abortSource = source;
 }
 
+bool RF_DapIdle(void) {
+    return !RF_dapReceiving && !RF_abortSource && DAP_queue.executed == DAP_queue.produced;
+}
+
 void RF_DapTransmit(void) {
     if (!RF_BridgeActive() || BSP_stopRequested || !BSP_workReady || DAP_queue.rf.fault) {
         return;
